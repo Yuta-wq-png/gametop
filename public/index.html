@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GameTop MG</title><script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>*{-webkit-tap-highlight-color:transparent}body{font-family:Inter,sans-serif;background:#050507;color:#fff}.orbit{font-family:Orbitron}.bg-mesh{background:radial-gradient(at 10% 10%,rgba(250,204,21,0.18) 0%,transparent 40%),#050507}.glass{background:linear-gradient(135deg,rgba(22,22,30,0.8) 0%,rgba(14,14,20,0.6) 100%);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08)}.glass-yellow{background:linear-gradient(135deg,rgba(250,204,21,0.15) 0%,rgba(250,204,21,0.05) 100%);border:1px solid rgba(250,204,21,0.2)}.btn{transition:.2s}.btn:active{transform:scale(.93)}</style>
+</head>
+<body class="bg-mesh min-h-screen">
+<div id="toasts" class="fixed top-4 right-4 z-[999] space-y-3 w-[90%] max-w-sm"></div>
+<header class="glass sticky top-0 z-50 px-5 py-4 flex justify-between items-center mx-4 mt-4 rounded-[20px]">
+<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center text-black font-black orbit text-xs">GT</div><div><h1 class="orbit font-black text-[12px]">GAMETOP <span class="text-yellow-400">MG</span></h1></div></div>
+<div class="flex gap-2"><button onclick="nav('history')" class="glass px-4 py-2.5 rounded-full text-[10px]">HISTORIQUE</button><button onclick="nav('cart')" class="bg-yellow-400 text-black px-5 py-2.5 rounded-full text-[10px] font-black flex gap-2">PANIER <span id="cartCount" class="bg-black text-yellow-400 w-5 h-5 rounded-full flex items-center justify-center">0</span></button></div>
+</header>
+
+<div id="home" class="max-w-6xl mx-auto p-4">
+<div class="glass rounded-[32px] p-8 mt-6"><h2 class="orbit text-5xl font-black">RECHARGE<br><span class="text-yellow-400">2 MINUTES</span></h2><div id="gamesList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-8"></div></div>
+</div>
+
+<div id="gameView" class="hidden max-w-6xl mx-auto p-4"><button onclick="nav('home')" class="text-xs opacity-30">← Retour</button><div id="gameHeader" class="mt-6"></div><div id="catTabs" class="flex gap-2 mt-8"></div><div id="tarifsList" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6"></div></div>
+
+<div id="cart" class="hidden max-w-xl mx-auto p-4"><button onclick="nav('home')" class="text-xs opacity-30">← Boutique</button><h2 class="orbit font-black mt-6 text-2xl">PANIER</h2><div id="cartItems" class="mt-6 space-y-3"></div><div class="glass rounded-[24px] p-6 mt-6 space-y-4"><input id="pseudo" placeholder="Pseudo *" class="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-xs"><input id="uid" placeholder="UID *" class="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-xs"><button onclick="goPay()" class="w-full bg-white text-black rounded-xl py-4 font-black text-xs">CONTINUER → PAIEMENT</button></div></div>
+
+<div id="payView" class="hidden max-w-xl mx-auto p-4"><button onclick="nav('cart')" class="text-xs opacity-30">← Retour</button><h2 class="orbit font-black mt-6 text-2xl">PAIEMENT</h2><div id="payInfo" class="glass-yellow rounded-[24px] p-6 mt-6"></div>
+<div class="glass rounded-[24px] p-6 mt-4 space-y-4">
+<select id="payMethod" class="w-full bg-black border-2 border-yellow-400 rounded-[16px] p-4 text-xs"><option>MVola</option><option selected>Orange Money</option><option>Cash Point</option></select>
+<input id="senderPhone" placeholder="Ton numéro expéditeur *" class="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-xs">
+<input id="payRef" placeholder="Référence transaction *" class="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-xs">
+<div id="fileZone" class="rounded-2xl p-[1.5px] bg-gradient-to-br from-yellow-400/40 to-white/5 cursor-pointer"><div class="bg-[#101018] rounded-[15px] p-5"><input type="file" id="proofFile" accept="image/*" class="hidden"><div id="fileEmpty" class="text-center"><div class="w-14 h-14 mx-auto rounded-2xl bg-yellow-400/15 flex items-center justify-center">📸</div><p class="font-black text-[11px] mt-3">CLIQUER POUR CAPTURE</p></div><div id="fileHas" class="hidden"><img id="previewImg" class="w-full max-h-[260px]"><p id="fileName" class="text-[10px] mt-2"></p><button type="button" onclick="removeFile()" class="bg-red-500/15 text-red-400 px-3 py-1 rounded-full text-[10px] mt-2">Retirer</button></div></div></div>
+<button onclick="confirmOrder()" class="w-full bg-yellow-400 text-black rounded-xl py-5 font-black text-xs orbit">CONFIRMER COMMANDE</button>
+</div></div>
+
+<div id="history" class="hidden max-w-xl mx-auto p-4"><button onclick="nav('home')" class="text-xs opacity-30">← Accueil</button><h2 class="orbit font-black mt-6 text-2xl">HISTORIQUE</h2><div id="historyList" class="mt-6 space-y-3"></div></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const toast=(m)=>{let c=$('#toasts');let d=document.createElement('div');d.className='glass px-5 py-4 rounded-2xl text-xs border-l-4 border-yellow-400';d.innerText=m;c.appendChild(d);setTimeout(()=>d.remove(),3000)};
+let games=[],tarifs=[],orders=[],settings={},cart=JSON.parse(localStorage.getItem('gt_cart')||'[]'),proof='';
+async function load(){let r=await fetch('/api?action=getAll');let d=await r.json();games=d.games;tarifs=d.tarifs;orders=d.orders;settings=d.settings;renderGames();$('#cartCount').innerText=cart.length;$('#payInfo').innerHTML=`<div class="grid grid-cols-2 gap-3"><div class="glass rounded-2xl p-4"><p class="text-[10px] text-green-400">MVOLA</p><p class="font-black">${settings.mvola_num}</p><a href="tel:${settings.mvola_ussd}" class="block text-center bg-yellow-400 text-black rounded-full py-2 text-[10px] mt-2">${settings.mvola_ussd}</a></div><div class="glass rounded-2xl p-4"><p class="text-[10px] text-orange-400">ORANGE</p><p class="font-black">${settings.orange_num}</p><a href="tel:${settings.orange_ussd}" class="block text-center bg-white text-black rounded-full py-2 text-[10px] mt-2">${settings.orange_ussd}</a></div></div>`}
+function saveCart(){localStorage.setItem('gt_cart',JSON.stringify(cart));}
+function nav(id){['home','gameView','cart','payView','history'].forEach(v=>$('#'+v).classList.add('hidden'));$('#'+id).classList.remove('hidden');if(id==='home')renderGames();if(id==='cart')renderCart();if(id==='history')renderHistory();}
+function renderGames(){$('#gamesList').innerHTML=games.map(g=>`<div onclick="openGame('${g.id}')" class="glass rounded-[28px] p-7 text-center cursor-pointer"><img src="${g.image}" class="w-12 h-12 mx-auto"><h4 class="orbit text-[11px] font-black mt-4">${g.name}</h4></div>`).join('');}
+let curG,curCat;function openGame(id){curG=games.find(g=>g.id===id);curCat=curG.cats[0];nav('gameView');$('#gameHeader').innerHTML=`<div class="glass rounded-[28px] p-7"><h2 class="orbit font-black text-2xl">${curG.name}</h2></div>`;$('#catTabs').innerHTML=curG.cats.map(c=>`<button onclick="setCat('${c}')" class="px-6 py-3 rounded-full text-[10px] ${curCat===c?'bg-yellow-400 text-black':'glass'}">${c}</button>`).join('');renderTarifs();}
+function setCat(c){curCat=c;$('#catTabs').innerHTML=curG.cats.map(x=>`<button onclick="setCat('${x}')" class="px-6 py-3 rounded-full text-[10px] ${curCat===x?'bg-yellow-400 text-black':'glass'}">${x}</button>`).join('');renderTarifs();}
+function renderTarifs(){let list=tarifs.filter(t=>t.gameId===curG.id&&t.cat===curCat);$('#tarifsList').innerHTML=list.map(t=>`<div class="glass rounded-[22px] p-5"><img src="${t.image}" class="w-14 h-14 mx-auto"><h4 class="font-bold text-[13px] mt-3">${t.name}</h4><p class="text-yellow-400 font-black">${Number(t.price).toLocaleString()} Ar</p><button onclick='addCart(${JSON.stringify(t)})' class="w-full mt-3 bg-white text-black rounded-full py-2 text-[10px]">+ PANIER</button></div>`).join('');}
+function addCart(t){cart.push(t);saveCart();toast('Ajouté '+t.name);$('#cartCount').innerText=cart.length;}
+function renderCart(){let tot=cart.reduce((s,c)=>s+Number(c.price),0);$('#cartItems').innerHTML=cart.length?cart.map((c,i)=>`<div class="glass rounded-2xl p-4 flex justify-between text-xs"><span>${c.name}</span><span>${c.price} Ar <button onclick="cart.splice(${i},1);saveCart();renderCart();$('#cartCount').innerText=cart.length">✕</button></span></div>`).join('')+`<div class="glass-yellow rounded-2xl p-4 flex justify-between font-black"><span>TOTAL</span><span>${tot.toLocaleString()} Ar</span></div>`:'<div class="glass rounded-2xl p-10 text-center opacity-30">Panier vide</div>';}
+function goPay(){if(!pseudo.value.trim()||!uid.value.trim()){toast('Pseudo + UID obligatoire');return}if(!cart.length){toast('Panier vide');return}localStorage.setItem('gt_tmp_p',pseudo.value);localStorage.setItem('gt_tmp_u',uid.value);nav('payView');}
+const fileZone=$('#fileZone'), proofFile=$('#proofFile');
+fileZone.addEventListener('click',()=>proofFile.click());
+proofFile.addEventListener('change',e=>{let r=new FileReader();r.onload=()=>{proof=r.result;$('#previewImg').src=proof;$('#fileName').innerText=e.target.files[0].name;$('#fileEmpty').classList.add('hidden');$('#fileHas').classList.remove('hidden');};r.readAsDataURL(e.target.files[0]);});
+function removeFile(){proof='';proofFile.value='';$('#fileEmpty').classList.remove('hidden');$('#fileHas').classList.add('hidden');}
+async function confirmOrder(){let ref=$('#payRef').value.trim(), sender=$('#senderPhone').value.trim();if(!sender||!ref||!proof){toast('Remplis tout + capture');return}
+let o={pseudo:localStorage.getItem('gt_tmp_p'),uid:localStorage.getItem('gt_tmp_u'),items:cart,total:cart.reduce((s,c)=>s+Number(c.price),0),method:$('#payMethod').value,ref,sender,proof,status:'pending',date:new Date().toLocaleString()};
+let res=await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'newOrder',data:o})});let j=await res.json();if(j.ok){cart=[];saveCart();proof='';toast('Commande envoyée');nav('history');load();}}
+function renderHistory(){$('#historyList').innerHTML=orders.filter(o=>o.pseudo===localStorage.getItem('gt_tmp_p')).map(o=>`<div class="glass rounded-2xl p-5 text-xs"><b>#${o.id.toString().slice(-6)} • ${o.total} Ar - ${o.status}</b><p>${o.pseudo} • ${o.method}</p></div>`).join('')||'<div class="glass p-10 text-center opacity-30">Aucune</div>';}
+load();
+</script></body></html>
