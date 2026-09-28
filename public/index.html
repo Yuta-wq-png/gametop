@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{overflow-x:hidden}body{background:#060608;color:#fff;font-family:Syne, sans-serif;overflow-x:hidden}
+.glass{background:rgba(18,18,22,.85);border:1px solid rgba(255,255,255,.06)}
+.card{border-radius:22px}.hide::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<div class="w-full max-w-[430px] md:max-w-[1100px] mx-auto min-h-screen relative bg-[#060608]">
+<div id="toasts" class="fixed top-4 left-1/2 -translate-x-1/2 z-[999] w-[90%] max-w-[360px] space-y-2 pointer-events-none"></div>
+
+<header class="sticky top-0 z-40 bg-[#060608]/90 backdrop-blur-xl border-b border-white/[0.05] px-5 md:px-8 py-4 flex justify-between items-center">
+<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#FACC15] text-black flex items-center justify-center font-black">GT</div><div><p class="font-[800] text-[13px]">GAMETOP<span class="text-[#FACC15]">.MG</span></p><p class="text-[9px] opacity-40 tracking-[0.2em]">RECHARGE 2MIN</p></div></div>
+<div class="flex gap-2"><button onclick="nav('history')" class="w-10 h-10 rounded-full glass">🕓</button><button onclick="nav('cart')" class="h-10 px-5 rounded-full bg-white text-black flex gap-2 items-center text-[11px] font-bold">PANIER <span id="cartCount" class="w-5 h-5 bg-black text-white rounded-full flex items-center justify-center">0</span></button></div>
+</header>
+
+<!-- HOME -->
+<div id="home" class="px-5 md:px-8 pb-24">
+<h1 class="font-[800] text-[32px] md:text-[56px] leading-[0.9] mt-8">RECHARGE TON <span class="text-[#FACC15]">JEU</span><br>EN 2 MIN.</h1>
+<div id="gamesList" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-5 mt-8"></div>
+</div>
+
+<div id="gameView" class="hidden px-5 md:px-8 pb-24">
+<button onclick="nav('home')" class="mt-6 glass w-10 h-10 rounded-full">←</button>
+<div id="gameHeader" class="mt-6"></div>
+<div id="catTabs" class="flex gap-2 mt-6 overflow-x-auto hide"></div>
+<div id="tarifsList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-6"></div>
+</div>
+
+<div id="cart" class="hidden px-5 md:px-8 pb-24 max-w-[600px] mx-auto">
+<button onclick="nav('home')" class="mt-6 text-[12px] opacity-40">← Boutique</button>
+<h2 class="font-[800] text-[28px] mt-4">PANIER</h2><div id="cartItems" class="mt-6"></div>
+<div class="glass card p-5 mt-6 space-y-3"><input id="pseudo" placeholder="Pseudo en jeu" class="w-full bg-black border border-white/10 rounded-xl p-4 text-[13px]"><input id="uid" placeholder="UID" class="w-full bg-black border border-white/10 rounded-xl p-4 text-[13px]"><button onclick="goPay()" class="w-full h-[54px] rounded-xl bg-[#FACC15] text-black font-[800]">PAYER →</button></div>
+</div>
+
+<div id="payView" class="hidden px-5 md:px-8 pb-24 max-w-[600px] mx-auto">
+<button onclick="nav('cart')" class="mt-6 text-[12px] opacity-40">← Panier</button>
+<h2 class="font-[800] text-[28px] mt-4">PAYER</h2><div id="payInfo" class="mt-6"></div>
+<div class="glass card p-5 mt-4 space-y-3">
+<select id="payMethod" class="w-full bg-black border border-[#FACC15] rounded-xl p-4 text-[13px]"><option>MVola</option><option selected>Orange Money</option></select>
+<input id="senderPhone" placeholder="Numéro qui a payé" class="w-full bg-[#111] border border-white/10 rounded-xl p-4 text-[13px]">
+<input id="payRef" placeholder="Référence" class="w-full bg-[#111] border border-white/10 rounded-xl p-4 text-[13px]">
+<div id="fileZone" class="rounded-[16px] border border-dashed border-[#FACC15]/30 p-4 text-center cursor-pointer"><input type="file" id="proofFile" accept="image/*" class="hidden"><div id="fileEmpty"><p class="text-[22px]">↑</p><p class="font-bold text-[12px]">CAPTURE DE PAIEMENT</p><p class="text-[10px] opacity-40">Clique ici</p></div><div id="fileHas" class="hidden"><img id="previewImg" class="w-full rounded-xl max-h-[300px] object-contain bg-black"><p id="fileName" class="text-[10px] mt-2 opacity-60"></p><button onclick="removeFile()" class="mt-2 text-[10px] bg-red-500/20 text-red-400 px-3 py-1 rounded-full">Retirer</button></div></div>
+<button onclick="confirmOrder()" class="w-full h-[56px] rounded-xl bg-[#FACC15] text-black font-[800]">CONFIRMER COMMANDE</button>
+</div>
+</div>
+
+<div id="history" class="hidden px-5 md:px-8 pb-24 max-w-[600px] mx-auto"><button onclick="nav('home')" class="mt-6 text-[12px] opacity-40">← Accueil</button><h2 class="font-[800] text-[28px] mt-4">HISTORIQUE</h2><div id="historyList" class="mt-6 space-y-3"></div></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const toast=m=>{let t=document.createElement('div');t.className='glass card p-4 text-[12px] border-l-4 border-[#FACC15]';t.innerText=m;$('#toasts').appendChild(t);setTimeout(()=>t.remove(),2500)};
+let games=[],tarifs=[],orders=[],settings={},cart=JSON.parse(localStorage.getItem('gt_cart')||'[]'),proof='';
+async function load(){let r=await fetch('/api?action=getAll');let d=await r.json();games=d.games;tarifs=d.tarifs;orders=d.orders;settings=d.settings;$('#cartCount').innerText=cart.length;renderGames();
+$('#payInfo').innerHTML=`<div class="grid grid-cols-2 gap-3"><a href="tel:${settings.mvola_ussd}" class="glass card p-4"><p class="text-[9px] text-green-400">MVOLA</p><p class="font-bold">${settings.mvola_num}</p><p class="mt-2 bg-[#FACC15] text-black text-[10px] text-center py-2 rounded-full font-bold">${settings.mvola_ussd}</p></a><a href="tel:${settings.orange_ussd}" class="glass card p-4"><p class="text-[9px] text-orange-400">ORANGE</p><p class="font-bold">${settings.orange_num}</p><p class="mt-2 bg-white text-black text-[10px] text-center py-2 rounded-full font-bold">${settings.orange_ussd}</p></a></div>`;}
+function nav(id){['home','gameView','cart','payView','history'].forEach(v=>$('#'+v).classList.add('hidden'));$('#'+id).classList.remove('hidden');window.scrollTo(0,0);if(id==='home')renderGames();if(id==='cart')renderCart();if(id==='history')renderHistory();}
+function renderGames(){$('#gamesList').innerHTML=games.map(g=>`<div onclick="openGame('${g.id}')" class="glass card p-5 text-center cursor-pointer hover:border-[#FACC15]/30"><img src="${g.image}" class="w-[56px] h-[56px] mx-auto"><p class="font-[700] text-[12px] mt-4">${g.name}</p></div>`).join('');}
+let curG,curCat;function openGame(id){curG=games.find(g=>g.id===id);curCat=curG.cats[0];nav('gameView');$('#gameHeader').innerHTML=`<div class="glass card p-5 flex gap-4 items-center"><img src="${curG.image}" class="w-14 h-14"><h2 class="font-[800] text-[20px]">${curG.name}</h2></div>`;renderTabs();renderTarifs();}
+function renderTabs(){$('#catTabs').innerHTML=curG.cats.map(c=>`<button onclick="setCat('${c}')" class="whitespace-nowrap px-5 h-10 rounded-full text-[11px] font-bold ${curCat===c?'bg-[#FACC15] text-black':'glass'}">${c}</button>`).join('');}
+function setCat(c){curCat=c;renderTabs();renderTarifs();}
+function renderTarifs(){let list=tarifs.filter(t=>t.gameId===curG.id&&t.cat===curCat);$('#tarifsList').innerHTML=list.map(t=>`<div class="glass card p-4"><img src="${t.image}" class="w-10 h-10"><p class="font-bold text-[12px] mt-3">${t.name}</p><p class="text-[#FACC15] font-[800] mt-1">${Number(t.price).toLocaleString()} Ar</p><button onclick='addCart(${JSON.stringify(t).replace(/'/g,"&#39;")})' class="w-full mt-3 h-9 rounded-full bg-white text-black text-[11px] font-bold">+ Ajouter</button></div>`).join('');}
+function addCart(t){cart.push(t);localStorage.setItem('gt_cart',JSON.stringify(cart));$('#cartCount').innerText=cart.length;toast(t.name+' ajouté');}
+function renderCart(){let tot=cart.reduce((s,c)=>s+Number(c.price),0);$('#cartItems').innerHTML=cart.length?cart.map((c,i)=>`<div class="glass card p-4 flex justify-between"><div><p class="font-bold text-[12px]">${c.name}</p></div><div class="text-right"><p class="text-[#FACC15] font-bold text-[12px]">${c.price} Ar</p><button onclick="cart.splice(${i},1);localStorage.setItem('gt_cart',JSON.stringify(cart));renderCart();$('#cartCount').innerText=cart.length" class="text-[10px] opacity-40">Retirer</button></div></div>`).join('')+`<div class="glass card p-4 flex justify-between bg-[#FACC15]/10 mt-3"><b>TOTAL</b><b>${tot.toLocaleString()} Ar</b></div>`:'<div class="glass card p-10 text-center opacity-30">Panier vide</div>';}
+function goPay(){if(!$('#pseudo').value||!$('#uid').value){toast('Pseudo + UID requis');return}if(!cart.length){toast('Panier vide');return}localStorage.setItem('gt_tmp_p',$('#pseudo').value);localStorage.setItem('gt_tmp_u',$('#uid').value);nav('payView');}
+$('#fileZone').addEventListener('click',()=>$('#proofFile').click());
+$('#proofFile').addEventListener('change',e=>{let r=new FileReader();r.onload=()=>{proof=r.result;$('#previewImg').src=proof;$('#fileName').innerText=e.target.files[0].name;$('#fileEmpty').classList.add('hidden');$('#fileHas').classList.remove('hidden');};r.readAsDataURL(e.target.files[0]);});
+function removeFile(){proof='';$('#proofFile').value='';$('#fileEmpty').classList.remove('hidden');$('#fileHas').classList.add('hidden');}
+async function confirmOrder(){let ref=$('#payRef').value.trim(),sender=$('#senderPhone').value.trim();if(!sender||!ref||!proof){toast('Remplis tout + capture');return}
+let o={pseudo:localStorage.getItem('gt_tmp_p'),uid:localStorage.getItem('gt_tmp_u'),items:cart,total:cart.reduce((s,c)=>s+Number(c.price),0),method:$('#payMethod').value,ref,sender,proof,status:'pending',date:new Date().toLocaleString()};
+await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'newOrder',data:o})});cart=[];localStorage.setItem('gt_cart',JSON.stringify(cart));$('#cartCount').innerText=0;toast('Commande envoyée');nav('history');load();}
+function renderHistory(){let me=localStorage.getItem('gt_tmp_p');let list=me?orders.filter(o=>o.pseudo===me):[];$('#historyList').innerHTML=list.map(o=>`<div class="glass card p-4"><b class="text-[12px]">#${o.id.toString().slice(-5)} • ${o.total} Ar • ${o.status}</b><p class="text-[11px] opacity-60">${o.method} • ${o.date}</p></div>`).join('')||'<div class="glass card p-8 text-center opacity-30">Aucune</div>';}
+load();
+</script></body></html>
