@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>body{background:#060608;color:#fff;font-family:Syne;overflow-x:hidden}.glass{background:rgba(18,18,22,.9);border:1px solid rgba(255,255,255,.06);border-radius:16px}.side{background:#0a0a0f;border-right:1px solid rgba(255,255,255,.06)}</style>
+</head><body>
+<div class="flex min-h-screen">
+<!-- Sidebar PC -->
+<div class="side hidden md:flex w-[260px] flex-col p-6 fixed h-full">
+<div class="w-10 h-10 bg-[#FACC15] rounded-xl text-black flex items-center justify-center font-black">GT</div>
+<h1 class="font-[800] mt-4">GAMETOP <span class="text-[#FACC15]">MG</span></h1>
+<div class="mt-8 space-y-2">
+<button onclick="tab='orders';render()" id="b-orders" class="w-full text-left px-4 py-3 rounded-xl bg-[#FACC15] text-black text-[12px] font-bold">📦 Commandes</button>
+<button onclick="tab='tarifs';render()" id="b-tarifs" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 text-[12px]">💰 Tarifs</button>
+<button onclick="tab='games';render()" id="b-games" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 text-[12px]">🎮 Jeux</button>
+<button onclick="tab='pay';render()" id="b-pay" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 text-[12px]">💳 USSD</button>
+</div>
+<a href="/" class="mt-auto glass py-3 text-center text-[11px] rounded-xl block">← Boutique</a>
+</div>
+
+<!-- Content -->
+<div class="flex-1 md:ml-[260px] p-5 md:p-10 pb-24">
+<div class="flex md:hidden gap-2 mb-6 overflow-x-auto">
+<button onclick="tab='orders';render()" class="px-4 h-9 rounded-full bg-[#FACC15] text-black text-[11px] font-bold whitespace-nowrap">Commandes</button>
+<button onclick="tab='tarifs';render()" class="px-4 h-9 rounded-full glass text-[11px] whitespace-nowrap">Tarifs</button>
+<button onclick="tab='games';render()" class="px-4 h-9 rounded-full glass text-[11px] whitespace-nowrap">Jeux</button>
+<button onclick="tab='pay';render()" class="px-4 h-9 rounded-full glass text-[11px] whitespace-nowrap">USSD</button>
+</div>
+<div id="content"></div>
+</div>
+</div>
+
+<script>
+let games=[],tarifs=[],orders=[],settings={},tab='orders';
+async function load(){let r=await fetch('/api?action=getAll');let d=await r.json();games=d.games;tarifs=d.tarifs;orders=d.orders;settings=d.settings;render();}
+async function save(type,data){await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:type,data})});load();}
+function render(){
+document.querySelectorAll('[id^=b-]').forEach(b=>{b.classList.remove('bg-[#FACC15]','text-black');b.classList.add('bg-white/5')});document.getElementById('b-'+tab)?.classList.add('bg-[#FACC15]','text-black');
+if(tab==='orders'){content.innerHTML=`<h2 class="text-[22px] font-[800]">COMMANDES (${orders.length})</h2><div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">${orders.map(o=>`<div class="glass p-5"><div class="flex justify-between"><b class="text-[12px]">#${o.id.toString().slice(-5)} • ${o.total} Ar</b><span class="text-[10px] px-2 py-1 rounded-full bg-white/10">${o.status}</span></div><p class="text-[11px] opacity-60 mt-2">👤 ${o.pseudo} • UID:${o.uid}</p><p class="text-[11px]">📱 ${o.sender} • Ref:${o.ref} • ${o.method}</p><p class="text-[11px] mt-1">${o.items.map(i=>i.name).join(', ')}</p>${o.proof?`<img src="${o.proof}" class="w-full mt-3 rounded-xl max-h-[300px] object-contain bg-black">`:''}<div class="flex gap-2 mt-4"><button onclick="upd('${o.id}','livré')" class="flex-1 h-10 rounded-full bg-green-400 text-black font-bold text-[11px]">LIVRÉ</button><button onclick="del('${o.id}')" class="flex-1 h-10 rounded-full bg-red-500/20 text-red-400 text-[11px]">SUPPR</button></div></div>`).join('')}</div>`}
+if(tab==='games'){content.innerHTML=`<h2 class="text-[20px] font-[800]">JEUX</h2><div class="glass p-5 mt-6 grid md:grid-cols-3 gap-3"><input id="gn" placeholder="Nom" class="bg-black border border-white/10 rounded-xl p-4 text-[13px]"><input id="gi" placeholder="Image URL" class="bg-black border border-white/10 rounded-xl p-4 text-[13px]"><input id="gc" placeholder="Cats: Top Up,Diamonds" class="bg-black border border-white/10 rounded-xl p-4 text-[13px]"><button onclick="games.push({id:Date.now().toString(),name:gn.value,image:gi.value,cats:gc.value.split(',').map(s=>s.trim())});save('saveGames',games)" class="md:col-span-3 h-12 bg-[#FACC15] text-black font-bold rounded-xl">+ AJOUTER JEU</button></div><div class="grid md:grid-cols-3 gap-3 mt-6">${games.map(g=>`<div class="glass p-4 flex justify-between items-center"><span class="text-[13px]">${g.name}</span><button onclick="games=games.filter(x=>x.id!=='${g.id}');save('saveGames',games)" class="text-red-400 text-[12px]">X</button></div>`).join('')}</div>`}
+if(tab==='tarifs'){content.innerHTML=`<h2 class="text-[20px] font-[800]">TARIFS</h2><div class="glass p-5 mt-6 grid md:grid-cols-4 gap-3"><select id="tg" class="bg-black border border-white/10 rounded-xl p-4 text-[12px]">${games.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select><input id="tc" placeholder="Cat" class="bg-black border border-white/10 rounded-xl p-3 text-[12px]"><input id="tn" placeholder="Nom pack" class="bg-black border border-white/10 rounded-xl p-3 text-[12px]"><input id="tp" type="number" placeholder="Prix Ar" class="bg-black border border-white/10 rounded-xl p-3 text-[12px]"><button onclick="tarifs.push({id:Date.now(),gameId:tg.value,cat:tc.value,name:tn.value,price:Number(tp.value),image:'https://cdn-icons-png.flaticon.com/512/1029/1029183.png'});save('saveTarifs',tarifs)" class="md:col-span-4 h-12 bg-[#FACC15] text-black font-bold rounded-xl">+ AJOUTER TARIF</button></div><div class="grid md:grid-cols-3 gap-3 mt-6">${tarifs.map(t=>`<div class="glass p-4 flex justify-between"><span class="text-[12px]">${t.name} - ${t.price}Ar</span><button onclick="tarifs=tarifs.filter(x=>x.id!==${t.id});save('saveTarifs',tarifs)" class="text-red-400">X</button></div>`).join('')}</div>`}
+if(tab==='pay'){content.innerHTML=`<h2 class="text-[20px] font-[800]">USSD & NUMEROS</h2><div class="glass p-6 mt-6 grid md:grid-cols-2 gap-4 max-w-[600px]"><div><p class="text-[10px] opacity-40">MVola Num</p><input id="m_num" value="${settings.mvola_num}" class="w-full mt-2 bg-black border border-white/10 rounded-xl p-4 text-[13px]"></div><div><p class="text-[10px] opacity-40">Orange Num</p><input id="o_num" value="${settings.orange_num}" class="w-full mt-2 bg-black border border-white/10 rounded-xl p-4 text-[13px]"></div><div class="md:col-span-2"><p class="text-[10px] opacity-40">MVola USSD</p><input id="m_ussd" value="${settings.mvola_ussd}" class="w-full mt-2 bg-black border border-white/10 rounded-xl p-4 text-[13px]"></div><div class="md:col-span-2"><p class="text-[10px] opacity-40">Orange USSD</p><input id="o_ussd" value="${settings.orange_ussd}" class="w-full mt-2 bg-black border border-white/10 rounded-xl p-4 text-[13px]"></div><button onclick="settings.mvola_num=m_num.value;settings.orange_num=o_num.value;settings.mvola_ussd=m_ussd.value;settings.orange_ussd=o_ussd.value;save('saveSettings',settings)" class="md:col-span-2 h-12 bg-[#FACC15] text-black font-bold rounded-xl">SAUVEGARDER</button></div>`}
+}
+async function upd(id,s){await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateOrder',id,status:s})});load();}
+async function del(id){await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteOrder',id})});load();}
+load();
+</script></body></html>
